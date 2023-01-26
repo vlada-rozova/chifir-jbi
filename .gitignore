@@ -138,6 +138,7 @@ datasets/gold_concepts.csv
 datasets/gold_relations.csv
 datasets/reports_dev.csv
 datasets/reports_test.csv
+Datastes/annotation.conf
 
 # Other
 .DS_Store
