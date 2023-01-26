@@ -127,3 +127,14 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Files
+datasets/annotations
+datasets/annotations_composite
+datasets/automated_extraction
+datasets/reports
+datasets/gold_composite.csv
+datasets/gold_concepts.csv
+datasets/gold_relations.csv
+datasets/reports_dev.csv
+datasets/reports_test.csv
