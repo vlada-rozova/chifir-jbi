@@ -135,10 +135,10 @@ def clean_text(text, mode='clean text'):
 def load_annotations(which='concepts'):
     """
     Load gold standard annotations.
-    v1 from 15.12.23
+    v2 from 10.01.24
     """
     # Load gold standard annotations
-    annotations = pd.read_csv("../datasets/gold_" + which + ".csv")
+    annotations = pd.read_csv("../datasets/gold_" + which + ".csv", converters={'phrase': str})
     
     # Convert concept types to categorical
     if which=='concepts':
