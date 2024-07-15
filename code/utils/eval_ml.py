@@ -222,12 +222,13 @@ def evaluate_classification(y, y_pred, filename=None):
 def plot_coefficients(intercept, coefs, feature_names, filename=None):
     """
     Bar plot of coefficient values for a logistic regression model.
-    v1 from 21.12.23
+    v2 from 15.07.24
     """
     plt.rcParams['figure.figsize'] = (4, 8)
     plt.figure();
     sns.lineplot(x=[0,0], y=[0,18]);
-    sns.barplot(x=intercept.tolist() + coefs.tolist(), y=['intercept'] + feature_names, orient='h');
+    sns.barplot(x=intercept.tolist() + coefs.tolist(), y=['intercept'] + feature_names, orient='h',
+                palette=sns.color_palette('Spectral', 18));
     plt.xticks(rotation=90);
     plt.ylabel("Coefficient");
     

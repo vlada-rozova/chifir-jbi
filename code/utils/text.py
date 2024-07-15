@@ -426,7 +426,7 @@ def detect_concepts(text, nlp, vocab):
 def doc2concepts(x):
     """
     Convert doc object to a table of concepts.
-    v1 from 03.01.24
+    v2 from 15.07.24
     """        
     # Create a dataframe to store annotations
     concepts = pd.DataFrame(columns=['histopathology_id', 'patient_id', 'report_no', 
@@ -453,9 +453,9 @@ def doc2concepts(x):
         
 
         if ent.label_ in ent_types and ent._.negex:
-            composite_label = 'negated' + ent.label_
+            composite_label = 'negated_' + ent.label_
         elif ent.label_ in ent_types and ent._.affirm:
-            composite_label = 'affirmed' + ent.label_
+            composite_label = 'affirmed_' + ent.label_
         else:
             composite_label = None
 

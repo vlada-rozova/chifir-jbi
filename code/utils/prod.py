@@ -4,7 +4,7 @@ import pandas as pd
 def get_feature_names(feature_sets):
     """
     Return the list of concepts, relations, or composite concepts.
-    v2 from 15.12.23
+    v3 from 15.07.24
     """
     feature_names = []
     
@@ -19,10 +19,10 @@ def get_feature_names(feature_sets):
                                   'invasiveness-rel', 'fungus-stain-rel'])
     
         if fs=='composite':
-            feature_names.extend(['affirmedFungalDescriptor', 'affirmedFungus', 
-                                  'affirmedInvasiveness', 'affirmedStain',
-                                  'negatedFungalDescriptor', 'negatedFungus', 
-                                  'negatedInvasiveness', 'negatedStain'])
+            feature_names.extend(['affirmed_FungalDescriptor', 'affirmed_Fungus', 
+                                  'affirmed_Invasiveness', 'affirmed_Stain',
+                                  'negated_FungalDescriptor', 'negated_Fungus', 
+                                  'negated_Invasiveness', 'negated_Stain'])
         if fs=='termsets':
             feature_names.extend(['preceding_positive', 'following_positive', 
                                   'preceding_negative', 'following_negative'])
