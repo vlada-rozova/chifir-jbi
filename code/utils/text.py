@@ -11,72 +11,77 @@ from spacy.tokens import Span, SpanGroup
 from spacy.util import filter_spans
 
 
-def clean_text(text, mode='clean text'):
+def clean_text(text, return_mapping=False):
     """
     Apply simple text preprocessing to reports and convert to lower case 
     or return the mapping for character positions.
-    v1 from 13.12.23
+    v2 from 10.01.24
     """
-    # Create a list of character position indices
-    mapping = list(range(0, len(text)))
+    if return_mapping:
+        # Create a list of character position indices
+        mapping = list(range(0, len(text)))
     
     # Add a full stop before a section header
     pattern = re.compile("(\s*\n\n[A-Z]{5,})")
     
-    # Adjust indices
-    i = 0
-    tmp = []
-    for m in pattern.finditer(text):
-        tmp += mapping[i:m.start()] + [np.nan]
-        i = m.start()
+    if return_mapping:
+        # Adjust indices
+        i = 0
+        tmp = []
+        for m in pattern.finditer(text):
+            tmp += mapping[i:m.start()] + [np.nan]
+            i = m.start()
 
-    tmp += mapping[i:]
-    mapping = tmp
+        tmp += mapping[i:]
+        mapping = tmp
         
     text = pattern.sub(r".\1", text)
     
     # Separate a plus sign from the preceding word with a space
     pattern = re.compile("(?<=\w)\+(?=\s)")
     
-    # Adjust indices
-    i = 0
-    tmp = []
-    for m in pattern.finditer(text):
-        tmp += mapping[i:m.start()] + [np.nan]
-        i = m.start()
+    if return_mapping:
+        # Adjust indices
+        i = 0
+        tmp = []
+        for m in pattern.finditer(text):
+            tmp += mapping[i:m.start()] + [np.nan]
+            i = m.start()
 
-    tmp += mapping[i:]
-    mapping = tmp
+        tmp += mapping[i:]
+        mapping = tmp
     
     text = pattern.sub(r" +", text)
 
     # Separate a hyphen from the following word with a space
     pattern = re.compile("(?<=\s)-(?=\w)")
     
-    # Adjust indices
-    i = 0
-    tmp = []
-    for m in pattern.finditer(text):
-        tmp += mapping[i:m.end()] + [np.nan]
-        i = m.end()
+    if return_mapping:
+        # Adjust indices
+        i = 0
+        tmp = []
+        for m in pattern.finditer(text):
+            tmp += mapping[i:m.end()] + [np.nan]
+            i = m.end()
 
-    tmp += mapping[i:]
-    mapping = tmp
+        tmp += mapping[i:]
+        mapping = tmp
     
     text = pattern.sub(r"- ", text)
                 
     # Separate a question mark from the following word with a space
     pattern = re.compile("\?(?=\w)")
     
-    # Adjust indices
-    i = 0
-    tmp = []
-    for m in pattern.finditer(text):
-        tmp += mapping[i:m.end()] + [np.nan]
-        i = m.end()
+    if return_mapping:
+        # Adjust indices
+        i = 0
+        tmp = []
+        for m in pattern.finditer(text):
+            tmp += mapping[i:m.end()] + [np.nan]
+            i = m.end()
 
-    tmp += mapping[i:]
-    mapping = tmp
+        tmp += mapping[i:]
+        mapping = tmp
         
     text = pattern.sub(r"? ", text)
         
@@ -87,32 +92,34 @@ def clean_text(text, mode='clean text'):
     # Remove multiple full stops
     pattern = re.compile("\.{2,}")
     
-    # Adjust indices
-    li = 0
-    tmp = []
-    for m in pattern.finditer(text):
-        ri = m.start() + 1
-        tmp += mapping[li:ri]
-        li = m.end()
-        
-    tmp += mapping[li:]
-    mapping = tmp
+    if return_mapping:
+        # Adjust indices
+        li = 0
+        tmp = []
+        for m in pattern.finditer(text):
+            ri = m.start() + 1
+            tmp += mapping[li:ri]
+            li = m.end()
+
+        tmp += mapping[li:]
+        mapping = tmp
 
     text = pattern.sub(r".", text)
         
     # Remove multiple spaces
     pattern = re.compile("\s{2,}")
     
-    # Adjust indices
-    li = 0
-    tmp = []
-    for m in pattern.finditer(text):
-        ri = m.start() + 1
-        tmp += mapping[li:ri]
-        li = m.end()
-        
-    tmp += mapping[li:]
-    mapping = tmp
+    if return_mapping:
+        # Adjust indices
+        li = 0
+        tmp = []
+        for m in pattern.finditer(text):
+            ri = m.start() + 1
+            tmp += mapping[li:ri]
+            li = m.end()
+
+        tmp += mapping[li:]
+        mapping = tmp
         
     text = pattern.sub(r" ", text)
     
@@ -126,10 +133,10 @@ def clean_text(text, mode='clean text'):
     # Convert to lowercase
     text = text.lower()
     
-    if mode=='clean text':
-        return text
-    elif mode=='map positions':
+    if return_mapping:
         return mapping
+    else:
+        return text
     
     
 def load_annotations(which='concepts'):

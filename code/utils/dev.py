@@ -21,7 +21,7 @@ def get_cv_strategy(n_splits=10):
 def get_scoring(n_labels, scorer=True):
     """
     Define scoring functions for binary and multi-class classifications.
-    v3 from 19.12.23
+    v4 from 18.01.24
     """
     # Binary vs. multi-class classification
     if n_labels == 2:
@@ -31,8 +31,8 @@ def get_scoring(n_labels, scorer=True):
         }
     else:
         scoring = {
-            'ROC AUC OvR': 'roc_auc_ovr', 
             'Weighted ROC AUC OvR': 'roc_auc_ovr_weighted',
+            'ROC AUC OvR': 'roc_auc_ovr', 
         }
         
     if scorer:

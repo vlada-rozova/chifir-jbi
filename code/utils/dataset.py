@@ -52,11 +52,11 @@ def read_reports(x, path):
 def parse_ann_files(df, path):
     """
     Parse .ann files and write into a dataframe of gold standard concepts.
-    v1 from 13.12.23
+    v2 from 11.01.24
     """
     # Create dataframes to store annotations
     concepts = pd.DataFrame(columns=['histopathology_id', 'patient_id', 'report_no', 
-                                     'concept_id', 'concept', 'phrase', 'position', 'start_char', 'end_char'])
+                                     'concept_id', 'concept', 'phrase', 'position'])
     relations = pd.DataFrame(columns=['histopathology_id', 'patient_id', 'report_no', 
                                       'relation_id', 'relation', 'arg1', 'arg2'])
 
@@ -80,7 +80,6 @@ def parse_ann_files(df, path):
                     concept_id = substrings[0]
                     concept = substrings[1].split(maxsplit=1)[0]
                     position = substrings[1].split(maxsplit=1)[1]
-                    start_char, end_char = re.split(' |;', position)[-2:]
                     text = substrings[2]
 
                     tmp = pd.DataFrame({
@@ -91,8 +90,6 @@ def parse_ann_files(df, path):
                         'concept': concept, 
                         'phrase': text,
                         'position': position, 
-                        'start_char': int(start_char),
-                        'end_char': int(end_char),
                     }, index=[0])
 
                     # Add to the table of concepts
@@ -124,6 +121,26 @@ def parse_ann_files(df, path):
     # Convert patient ID and report number to int
     concepts[['patient_id', 'report_no']] = concepts[['patient_id', 'report_no']].astype(int)
     relations[['patient_id', 'report_no']] = relations[['patient_id', 'report_no']].astype(int)
+    
+    # Start and end character positions
+    concepts['start_char'] = concepts.position.apply(lambda x: x.split()[0]).astype(int)
+    concepts['end_char'] = concepts.position.apply(lambda x: x.split()[-1]).astype(int)
+    
+    # Discont concepts have ;-separated positions
+    idx = concepts[concepts.position.str.contains(";")].index
+
+    # Flag discont concepts that should be merged into one
+    concepts.loc[idx, 'to_merge'] = concepts.iloc[idx].apply(
+        lambda x: x.end_char - x.start_char == len(x.phrase), axis=1)
+
+    print("Found %d discontinous concepts that should be merged" % concepts.to_merge.sum())
+
+    # Overwrite position
+    concepts.loc[concepts.to_merge==True, 'position'] = concepts[concepts.to_merge==True].apply(
+        lambda x: str(x.start_char) + " " + str(x.end_char), axis=1)
+    
+    # Remove flag
+    concepts.drop('to_merge', axis=1, inplace=True)
 
     print("Extracted %d concepts and %d relations." % (concepts.shape[0], relations.shape[0]))
     
@@ -213,27 +230,33 @@ def get_cue_order(concepts, relations, cues_to_check):
 def add_composite_concepts(concepts, relations, relations_to_add):
     """
     Combine concepts and relations into composite concepts.
-    v1 from 13.12.23
+    v2 from 11.01.24
     """
-    def get_composite_concept(x, name):
-        # Define the next vacant concept ID
-        next_id = concepts[concepts.histopathology_id==x.histopathology_id].concept_id.apply(lambda x: 
-                                                                                             int(x[1:])
-                                                                                            ).max() + 1
-        # Determine the object (Arg2) of a relation
-        y = concepts[(concepts.histopathology_id==x.histopathology_id) & 
-                     (concepts.concept_id==x.arg2)].iloc[0]
+    def get_composite_concept(x, cues):
+        # Determine the subject (Arg1) of the relation
+        y = concepts[(concepts.histopathology_id==x.histopathology_id) & (concepts.concept_id==x.arg1)]
+
+        if y.concept.item() in cues.keys():
+
+            # Define the next vacant concept ID
+            next_id = concepts[concepts.histopathology_id==x.histopathology_id].concept_id.apply(lambda x: int(x[1:])).max() + 1
             
-        # Create an entry containing concept ID, composite category, position and the raw text
-        return pd.DataFrame({'histopathology_id': x.histopathology_id,
-                             'patient_id': x.patient_id,
-                             'report_no': x.report_no, 
-                             'concept_id': 'T' + str(next_id), 
-                             'concept': name + y.concept,
-                             'phrase': y.phrase,
-                             'start_char': y.start_char,
-                             'end_char': y.end_char,
-                            }, index=[0])
+            # Determine the object (Arg2) of the relation. 
+            # In case of discont concepts, the noun is usually at the end of the phrase: select the last part
+            z = concepts[(concepts.histopathology_id==x.histopathology_id) & 
+                         (concepts.concept_id==x.arg2)
+                        ].sort_values(by='start_char').iloc[-1]
+            
+            # Create an entry containing concept ID, composite category, position and the raw text
+            return pd.DataFrame({'histopathology_id': x.histopathology_id,
+                                 'patient_id': x.patient_id,
+                                 'report_no': x.report_no, 
+                                 'concept_id': 'T' + str(next_id), 
+                                 'concept': cues[y.concept.item()] + '_' + z.concept,
+                                 'phrase': z.phrase,
+                                 'start_char': z.start_char,
+                                 'end_char': z.end_char,
+                                }, index=[0])
             
     for k,v in relations_to_add.items():
         # Loop over the dataframe with extracted relations
@@ -241,7 +264,7 @@ def add_composite_concepts(concepts, relations, relations_to_add):
             # Add to the table of concepts
             concepts = pd.concat([concepts, get_composite_concept(x, v)], axis=0, ignore_index=True)
     
-     # Drop duplicated composite concepts
+    # Drop duplicated composite concepts
     concepts.drop_duplicates(subset=['histopathology_id', 'concept', 'start_char'], inplace=True, ignore_index=True)
 
     print("Totalling %d concepts and composite concepts." % concepts.shape[0])
@@ -252,7 +275,7 @@ def add_composite_concepts(concepts, relations, relations_to_add):
 def read_annotations(df, path):
     """
     Parse and post-process .ann files.
-    v2 from 05.01.24 (reduced functionality)
+    v3 from 11.01.24 (reduced functionality)
     """
     # Parse annotation files
     concepts, relations = parse_ann_files(df, path)
@@ -276,8 +299,9 @@ def read_annotations(df, path):
     
     # Create composite concepts
     composite_concepts = add_composite_concepts(concepts, relations, 
-                                                {'positive-rel': 'affirmed', 
-                                                 'negative-rel': 'negated'})
+                                                {'positive-rel': {'positive': 'affirmed'},
+                                                 'negative-rel': {'negative': 'negated'}
+                                                })
     
     # Save the extracted concepts and relations
     concepts.to_csv("../datasets/gold_concepts.csv", index=False)
