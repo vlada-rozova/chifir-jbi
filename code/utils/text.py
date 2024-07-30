@@ -426,10 +426,10 @@ def detect_concepts(text, nlp, vocab):
 def doc2concepts(x):
     """
     Convert doc object to a table of concepts.
-    v2 from 15.07.24
+    v3 from 30.07.24
     """        
     # Create a dataframe to store annotations
-    concepts = pd.DataFrame(columns=['histopathology_id', 'patient_id', 'report_no', 
+    concepts = pd.DataFrame(columns=['histopathology_id',
                                      'concept', 'phrase',
                                      'start_char', 'end_char'])   
     
@@ -440,8 +440,6 @@ def doc2concepts(x):
         
         tmp = pd.DataFrame({
             'histopathology_id': x.histopathology_id,
-            'patient_id': x.patient_id, 
-            'report_no': x.report_no, 
             'concept': ent.label_, 
             'phrase': x.clean_text[ent.start_char:ent.end_char],
             'start_char': ent.start_char,
@@ -463,8 +461,6 @@ def doc2concepts(x):
                         
             tmp = pd.DataFrame({
                 'histopathology_id': x.histopathology_id,
-                'patient_id': x.patient_id, 
-                'report_no': x.report_no, 
                 'concept': composite_label, 
                 'phrase': x.clean_text[ent.start_char:ent.end_char],
                 'start_char': ent.start_char,
